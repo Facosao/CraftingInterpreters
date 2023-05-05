@@ -86,6 +86,7 @@ class TokenType:
         "TRUE",
         "VAR",
         "WHILE",
+        "EOF",
     ]
 
     def __init__(self, type_value):

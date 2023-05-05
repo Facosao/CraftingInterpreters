@@ -1,6 +1,5 @@
 from token_class import Token
 from token_type import TokenType
-import lox as Lox
 
 
 class Scanner:
@@ -23,17 +22,18 @@ class Scanner:
         "while": TokenType(TokenType.WHILE),
     }
 
-    def __init__(self, source: str) -> None:
+    def __init__(self, source: str, error_var: bool) -> None:
         self.source: str = source
         self.tokens: list[Token] = []
         self.start: int = 0
         self.current: int = 0
         self.line: int = 1
+        self.had_error: bool = error_var
 
     def scan_tokens(self) -> list[Token]:
         while not self.__is_at_end():
             self.start = self.current
-            break
+            self.__scan_token()
 
         self.tokens.append(Token(TokenType(TokenType.EOF), "", None, self.line))
         return self.tokens
@@ -46,7 +46,7 @@ class Scanner:
         self.current += 1
         return character
 
-    def __add_token(self, type: TokenType, literal: object = "PyLoxNULL") -> None:
+    def __add_token(self, type: TokenType, literal: object = None) -> None:  # PyLoxNULL
         text: str = self.source[self.start : self.current]  # Check for correctness
         self.tokens.append(Token(type, text, literal, self.line))
 
@@ -112,11 +112,15 @@ class Scanner:
                 pass
             case "\n":
                 self.line += 1
+            case '"':
+                self.__string()
             case _:
                 if self.__is_digit(character):
                     self.__number()
+                elif self.__is_alpha(character):
+                    self.__identifier()
                 else:
-                    Lox.error(self.line, "Unexpected character.")
+                    self.__error(self.line, "Unexpected character.")
 
     def __match(self, expected: str) -> bool:
         if self.__is_at_end():
@@ -141,7 +145,7 @@ class Scanner:
             self.__advance()
 
         if self.__is_at_end():
-            Lox.error(self.line, "Unterminated string.")
+            self.__error(self.line, "Unterminated string.")
             return
 
         self.__advance()
@@ -150,11 +154,7 @@ class Scanner:
         self.__add_token(TokenType(TokenType.STRING), substr)
 
     def __is_digit(self, c: str) -> bool:
-        attempt = int(c)
-        if attempt == 0:
-            return False
-        else:
-            return 0 <= attempt <= 9
+        return "0" <= c <= "9"
 
     def __number(self) -> None:
         while self.__is_digit(self.__peek()):
@@ -192,3 +192,10 @@ class Scanner:
             self.__add_token(TokenType(TokenType.IDENTIFIER))
         else:
             self.__add_token(word)
+
+    def __report(self, line: int, where: str, message: str) -> None:
+        print("[line " + str(line) + "] Error" + where + ": " + message)
+        self.had_error = True
+
+    def __error(self, line: int, message: str) -> None:
+        self.__report(line, "", message)
