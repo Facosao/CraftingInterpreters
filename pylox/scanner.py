@@ -1,3 +1,4 @@
+import error
 from token_class import Token
 from token_type import TokenType
 
@@ -120,7 +121,7 @@ class Scanner:
                 elif self.__is_alpha(character):
                     self.__identifier()
                 else:
-                    self.__error(self.line, "Unexpected character.")
+                    error.error(self.line, "Unexpected character.", self.had_error)
 
     def __match(self, expected: str) -> bool:
         if self.__is_at_end():
@@ -145,7 +146,7 @@ class Scanner:
             self.__advance()
 
         if self.__is_at_end():
-            self.__error(self.line, "Unterminated string.")
+            error.error(self.line, "Unterminated string.", self.had_error)
             return
 
         self.__advance()
@@ -192,10 +193,3 @@ class Scanner:
             self.__add_token(TokenType(TokenType.IDENTIFIER))
         else:
             self.__add_token(word)
-
-    def __report(self, line: int, where: str, message: str) -> None:
-        print("[line " + str(line) + "] Error" + where + ": " + message)
-        self.had_error = True
-
-    def __error(self, line: int, message: str) -> None:
-        self.__report(line, "", message)
