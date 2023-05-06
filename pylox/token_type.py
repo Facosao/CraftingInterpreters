@@ -89,8 +89,8 @@ class TokenType:
         "EOF",
     ]
 
-    def __init__(self, type_value):
-        self.value = type_value
+    def __init__(self, type_value: int):
+        self.value: int = type_value
 
     def __str__(self):
         return self.name_list[self.value]

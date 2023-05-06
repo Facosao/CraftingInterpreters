@@ -1,26 +1,27 @@
 import error
 from token_class import Token
 from token_type import TokenType
+import token_type_instances as TT
 
 
 class Scanner:
     keywords: dict[str, TokenType] = {
-        "and": TokenType(TokenType.AND),
-        "class": TokenType(TokenType.CLASS),
-        "else": TokenType(TokenType.ELSE),
-        "false": TokenType(TokenType.FALSE),
-        "for": TokenType(TokenType.FOR),
-        "fun": TokenType(TokenType.FUN),
-        "if": TokenType(TokenType.IF),
-        "nil": TokenType(TokenType.NIL),
-        "or": TokenType(TokenType.OR),
-        "print": TokenType(TokenType.PRINT),
-        "return": TokenType(TokenType.RETURN),
-        "super": TokenType(TokenType.SUPER),
-        "this": TokenType(TokenType.THIS),
-        "true": TokenType(TokenType.TRUE),
-        "var": TokenType(TokenType.VAR),
-        "while": TokenType(TokenType.WHILE),
+        "and": TT.AND,
+        "class": TT.CLASS,
+        "else": TT.ELSE,
+        "false": TT.FALSE,
+        "for": TT.FOR,
+        "fun": TT.FUN,
+        "if": TT.IF,
+        "nil": TT.NIL,
+        "or": TT.OR,
+        "print": TT.PRINT,
+        "return": TT.RETURN,
+        "super": TT.SUPER,
+        "this": TT.THIS,
+        "true": TT.TRUE,
+        "var": TT.VAR,
+        "while": TT.WHILE,
     }
 
     def __init__(self, source: str, error_var: bool) -> None:
@@ -29,14 +30,14 @@ class Scanner:
         self.start: int = 0
         self.current: int = 0
         self.line: int = 1
-        self.had_error: bool = error_var
+        self.error_var: bool = error_var
 
     def scan_tokens(self) -> list[Token]:
         while not self.__is_at_end():
             self.start = self.current
             self.__scan_token()
 
-        self.tokens.append(Token(TokenType(TokenType.EOF), "", None, self.line))
+        self.tokens.append(Token(TT.EOF, "", None, self.line))
         return self.tokens
 
     def __is_at_end(self) -> bool:
@@ -56,59 +57,43 @@ class Scanner:
 
         match character:
             case "(":
-                self.__add_token(TokenType(TokenType.LEFT_PAREN))
+                self.__add_token(TT.LEFT_PAREN)
             case ")":
-                self.__add_token(TokenType(TokenType.RIGHT_BRACE))
+                self.__add_token(TT.RIGHT_PAREN)
             case "{":
-                self.__add_token(TokenType(TokenType.LEFT_BRACE))
+                self.__add_token(TT.LEFT_BRACE)
             case "}":
-                self.__add_token(TokenType(TokenType.RIGHT_BRACE))
+                self.__add_token(TT.RIGHT_BRACE)
             case ",":
-                self.__add_token(TokenType(TokenType.COMMA))
+                self.__add_token(TT.COMMA)
             case ".":
-                self.__add_token(TokenType(TokenType.DOT))
+                self.__add_token(TT.DOT)
             case "-":
-                self.__add_token(TokenType(TokenType.MINUS))
+                self.__add_token(TT.MINUS)
             case "+":
-                self.__add_token(TokenType(TokenType.PLUS))
+                self.__add_token(TT.PLUS)
             case ";":
-                self.__add_token(TokenType(TokenType.SEMICOLON))
+                self.__add_token(TT.SEMICOLON)
             case "*":
-                self.__add_token(TokenType(TokenType.STAR))
+                self.__add_token(TT.STAR)
             case "!":
-                token = (
-                    TokenType(TokenType.BANG_EQUAL)
-                    if self.__match("=")
-                    else TokenType(TokenType.BANG)
-                )
+                token = TT.BANG_EQUAL if self.__match("=") else TT.BANG
                 self.__add_token(token)
             case "=":
-                token = (
-                    TokenType(TokenType.EQUAL_EQUAL)
-                    if self.__match("=")
-                    else TokenType(TokenType.EQUAL)
-                )
+                token = TT.EQUAL_EQUAL if self.__match("=") else TT.EQUAL
                 self.__add_token(token)
             case "<":
-                token = (
-                    TokenType(TokenType.LESS_EQUAL)
-                    if self.__match("=")
-                    else TokenType(TokenType.LESS)
-                )
+                token = TT.LESS_EQUAL if self.__match("=") else TT.LESS
                 self.__add_token(token)
             case ">":
-                token = (
-                    TokenType(TokenType.GREATER_EQUAL)
-                    if self.__match("=")
-                    else TokenType(TokenType.GREATER)
-                )
+                token = TT.GREATER_EQUAL if self.__match("=") else TT.GREATER
                 self.__add_token(token)
             case "/":
                 if self.__match("/"):
                     while (self.__peek() != "\n") and (not self.__is_at_end()):
                         self.__advance()
                 else:
-                    self.__add_token(TokenType(TokenType.SLASH))
+                    self.__add_token(TT.SLASH)
             case " " | "\r" | "\t":
                 pass
             case "\n":
@@ -121,7 +106,7 @@ class Scanner:
                 elif self.__is_alpha(character):
                     self.__identifier()
                 else:
-                    error.error(self.line, "Unexpected character.", self.had_error)
+                    error.error(self.line, "Unexpected character.", self.error_var)
 
     def __match(self, expected: str) -> bool:
         if self.__is_at_end():
@@ -146,13 +131,13 @@ class Scanner:
             self.__advance()
 
         if self.__is_at_end():
-            error.error(self.line, "Unterminated string.", self.had_error)
+            error.error(self.line, "Unterminated string.", self.error_var)
             return
 
         self.__advance()
 
         substr: str = self.source[self.start + 1 : self.current - 1]
-        self.__add_token(TokenType(TokenType.STRING), substr)
+        self.__add_token(TT.STRING, substr)
 
     def __is_digit(self, c: str) -> bool:
         return "0" <= c <= "9"
@@ -169,7 +154,7 @@ class Scanner:
                 self.__advance()
 
         new_number = float(self.source[self.start : self.current])
-        self.__add_token(TokenType(TokenType.NUMBER), new_number)
+        self.__add_token(TT.NUMBER, new_number)
 
     def __peek_next(self) -> str:
         if self.current + 1 >= len(self.source):
@@ -190,6 +175,6 @@ class Scanner:
         text: str = self.source[self.start : self.current]
         word: None | TokenType = self.keywords.get(text)
         if word == None:
-            self.__add_token(TokenType(TokenType.IDENTIFIER))
+            self.__add_token(TT.IDENTIFIER)
         else:
             self.__add_token(word)

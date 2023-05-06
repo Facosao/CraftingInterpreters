@@ -1,5 +1,6 @@
 import sys
 from scanner import Scanner
+from parser_class import Parser
 from token_class import Token
 
 had_error = False
@@ -28,13 +29,14 @@ def run_prompt() -> None:
 def run(code: str) -> None:
     scanner = Scanner(code, had_error)
     tokens: list[Token] = scanner.scan_tokens()
-    for token in tokens:
-        print(token)
+    parser = Parser(tokens, had_error)
+    expression = parser.parse()
+    print(expression)
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 2:
-        print("Usage: pylox [script]")
+        print("Usage: python lox.py [script]")
         sys.exit(64)
     else:
         if len(sys.argv) == 2:
