@@ -1,4 +1,5 @@
 import sys
+import expr
 from scanner import Scanner
 from parser_class import Parser
 from token_class import Token
@@ -32,6 +33,9 @@ def run(code: str) -> None:
     parser = Parser(tokens, had_error)
     expression = parser.parse()
     print(expression)
+    if isinstance(expression, expr.Expr):
+        value = expression.interpret()
+        print(expr.stringify(value))
 
 
 if __name__ == "__main__":
