@@ -1,9 +1,11 @@
 from token_class import Token
 import token_type_instances as TT
+import error
 
 
-class OperandCastError(RuntimeError):
-    ...
+def LoxRuntimeError(lox_token: Token, message: str) -> RuntimeError:
+    error.runtime_error(lox_token, message)
+    raise RuntimeError
 
 
 class AbstractClassInstance(RuntimeError):
@@ -49,6 +51,20 @@ def stringify(lox_object: object) -> str:
     return str(lox_object)
 
 
+def check_operand(operator: Token, operand: object) -> float:
+    if isinstance(operand, float):
+        return operand
+
+    raise LoxRuntimeError(operator, "Operand must be a number.")
+
+
+def check_operands(operator: Token, left: object, right: object) -> tuple[float, float]:
+    if isinstance(left, float) and isinstance(right, float):
+        return left, right
+
+    raise LoxRuntimeError(operator, "Operands must be a number.")
+
+
 def is_truthy(test_obj: object) -> bool:
     if object == None:
         return False
@@ -82,40 +98,26 @@ class Binary(Expr):
 
         match self.operator.type:
             case TT.MINUS:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) - float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left - right
             case TT.SLASH:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) / float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left / right
             case TT.STAR:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) * float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left * right
             case TT.GREATER:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) > float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left > right
             case TT.GREATER_EQUAL:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) >= float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left >= right
             case TT.LESS:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) < float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left < right
             case TT.LESS_EQUAL:
-                if isinstance(left, float) and isinstance(right, float):
-                    return float(left) <= float(right)
-                else:
-                    raise OperandCastError
+                left, right = check_operands(self.operator, left, right)
+                return left <= right
             case TT.BANG_EQUAL:
                 return not is_equal(left, right)
             case TT.EQUAL_EQUAL:
@@ -126,7 +128,9 @@ class Binary(Expr):
                 elif isinstance(left, str) and isinstance(right, str):
                     return str(left) + str(right)
                 else:
-                    raise OperandCastError
+                    raise LoxRuntimeError(
+                        self.operator, "Operands must be two numbers or two strings."
+                    )
 
         return None
 
@@ -146,10 +150,8 @@ class Unary(Expr):
             case TT.BANG:
                 return not is_truthy(right)
             case TT.MINUS:
-                if isinstance(right, float):
-                    return 0 - float(right)
-                else:
-                    raise OperandCastError
+                right = check_operand(self.operator, right)
+                return 0 - right
 
         return None
 

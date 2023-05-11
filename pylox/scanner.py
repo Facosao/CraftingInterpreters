@@ -24,13 +24,12 @@ class Scanner:
         "while": TT.WHILE,
     }
 
-    def __init__(self, source: str, error_var: bool) -> None:
+    def __init__(self, source: str) -> None:
         self.source: str = source
         self.tokens: list[Token] = []
         self.start: int = 0
         self.current: int = 0
         self.line: int = 1
-        self.error_var: bool = error_var
 
     def scan_tokens(self) -> list[Token]:
         while not self.__is_at_end():
@@ -106,7 +105,7 @@ class Scanner:
                 elif self.__is_alpha(character):
                     self.__identifier()
                 else:
-                    error.error(self.line, "Unexpected character.", self.error_var)
+                    error.error(self.line, "Unexpected character.")
 
     def __match(self, expected: str) -> bool:
         if self.__is_at_end():
@@ -131,7 +130,7 @@ class Scanner:
             self.__advance()
 
         if self.__is_at_end():
-            error.error(self.line, "Unterminated string.", self.error_var)
+            error.error(self.line, "Unterminated string.")
             return
 
         self.__advance()

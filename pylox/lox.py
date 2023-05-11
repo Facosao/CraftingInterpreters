@@ -1,10 +1,11 @@
 import sys
 import expr
+import error
 from scanner import Scanner
 from parser_class import Parser
 from token_class import Token
 
-had_error = False
+# TODO: Catch RuntimeError exception inside run_file and run_prompt
 
 
 def run_file(script: str) -> None:
@@ -13,8 +14,11 @@ def run_file(script: str) -> None:
     file_handler.close()
     run(source_code)
 
-    if had_error is True:
+    if error.had_error is True:
         sys.exit(65)
+
+    if error.had_runtime_error is True:
+        sys.exit(70)
 
 
 def run_prompt() -> None:
@@ -22,20 +26,23 @@ def run_prompt() -> None:
         try:
             user_input = input("> ")
             run(user_input)
-            had_error = False
+            error.had_error = False
         except EOFError:
             break
 
 
 def run(code: str) -> None:
-    scanner = Scanner(code, had_error)
+    scanner = Scanner(code)
     tokens: list[Token] = scanner.scan_tokens()
-    parser = Parser(tokens, had_error)
+    parser = Parser(tokens)
     expression = parser.parse()
     print(expression)
     if isinstance(expression, expr.Expr):
-        value = expression.interpret()
-        print(expr.stringify(value))
+        try:
+            value = expression.interpret()
+            print(expr.stringify(value))
+        except RuntimeError:
+            pass
 
 
 if __name__ == "__main__":

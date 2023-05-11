@@ -11,10 +11,9 @@ class ParseError(Exception):
 
 
 class Parser:
-    def __init__(self, tokens: list[Token], error_var: bool) -> None:
+    def __init__(self, tokens: list[Token]) -> None:
         self.tokens: list[Token] = tokens
         self.current: int = 0
-        self.error_var = error_var
 
     def parse(self) -> Expr | None:
         try:
@@ -37,7 +36,7 @@ class Parser:
         raise self.__error(self.__peek(), message)
 
     def __error(self, lox_token: Token, message: str) -> ParseError:
-        error.token_error(lox_token, message, self.error_var)
+        error.token_error(lox_token, message)
         return ParseError()
 
     def __synchonize(self) -> None:
