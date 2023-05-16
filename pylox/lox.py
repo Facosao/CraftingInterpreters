@@ -5,14 +5,15 @@ from scanner import Scanner
 from parser_class import Parser
 from token_class import Token
 
-# TODO: Catch RuntimeError exception inside run_file and run_prompt
-
 
 def run_file(script: str) -> None:
     file_handler = open(script, "r")
     source_code = file_handler.read(-1)
     file_handler.close()
-    run(source_code)
+    try:
+        run(source_code)
+    except RuntimeError:
+        print("Fatal error, interpreter halted.")
 
     if error.had_error is True:
         sys.exit(65)
@@ -27,6 +28,8 @@ def run_prompt() -> None:
             user_input = input("> ")
             run(user_input)
             error.had_error = False
+        except RuntimeError:
+            continue
         except EOFError:
             break
 
@@ -38,11 +41,8 @@ def run(code: str) -> None:
     expression = parser.parse()
     print(expression)
     if isinstance(expression, expr.Expr):
-        try:
-            value = expression.interpret()
-            print(expr.stringify(value))
-        except RuntimeError:
-            pass
+        value = expression.interpret()
+        print(expr.stringify(value))
 
 
 if __name__ == "__main__":

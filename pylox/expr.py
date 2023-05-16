@@ -8,7 +8,7 @@ def LoxRuntimeError(lox_token: Token, message: str) -> RuntimeError:
     raise RuntimeError
 
 
-class AbstractClassInstance(RuntimeError):
+class AbstractClassInstance(Exception):
     ...
 
 
