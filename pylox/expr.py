@@ -1,86 +1,15 @@
 from token_class import Token
 import token_type_instances as TT
 import error
-
-
-def LoxRuntimeError(lox_token: Token, message: str) -> RuntimeError:
-    error.runtime_error(lox_token, message)
-    raise RuntimeError
-
-
-class AbstractClassInstance(Exception):
-    ...
+import env
 
 
 class Expr:
     def __init__(self) -> None:
-        raise AbstractClassInstance
+        raise error.AbstractClassInstance
 
     def interpret(self) -> object:
-        pass
-
-
-def parenthesize(name: str, exprs: list[Expr]) -> str:
-    output = "(" + name
-
-    for expr in exprs:
-        output += " "
-        output += str(expr)
-
-    output += ")"
-    return output
-
-
-def stringify(lox_object: object) -> str:
-    if lox_object is None:
-        return "nil"
-
-    if isinstance(lox_object, bool):
-        if lox_object is True:
-            return "true"
-        else:
-            return "false"
-
-    if isinstance(lox_object, float):
-        text = str(lox_object)
-        if text.endswith(".0"):
-            text = text[0 : len(text) - 2]
-
-        return text
-
-    return str(lox_object)
-
-
-def check_operand(operator: Token, operand: object) -> float:
-    if isinstance(operand, float):
-        return operand
-
-    raise LoxRuntimeError(operator, "Operand must be a number.")
-
-
-def check_operands(operator: Token, left: object, right: object) -> tuple[float, float]:
-    if isinstance(left, float) and isinstance(right, float):
-        return left, right
-
-    raise LoxRuntimeError(operator, "Operands must be a number.")
-
-
-def is_truthy(test_obj: object) -> bool:
-    if object == None:
-        return False
-    if isinstance(test_obj, bool) is True:
-        return bool(test_obj)
-
-    return True
-
-
-def is_equal(obj_a: object, obj_b: object) -> bool:
-    if (obj_a is None) and (obj_b is None):
-        return True
-    if obj_a is None:
-        return False
-
-    return obj_a == obj_b
+        raise error.UndefinedMethod
 
 
 class Binary(Expr):
@@ -128,7 +57,7 @@ class Binary(Expr):
                 elif isinstance(left, str) and isinstance(right, str):
                     return str(left) + str(right)
                 else:
-                    raise LoxRuntimeError(
+                    raise error.runtime_error(
                         self.operator, "Operands must be two numbers or two strings."
                     )
 
@@ -179,3 +108,91 @@ class Literal(Expr):
 
     def interpret(self) -> object:
         return self.value
+
+
+class Variable(Expr):
+    def __init__(self, name: Token) -> None:
+        self.name: Token = name
+
+    def __str__(self) -> str:
+        return self.name.lexeme
+
+    def interpret(self) -> object:
+        return env.instance.get(self.name)
+
+
+class Assign(Expr):
+    def __init__(self, name: Token, value: Expr) -> None:
+        self.name: Token = name
+        self.value: Expr = value
+
+    def __str__(self) -> str:
+        return self.name.lexeme
+
+    def interpret(self) -> object:
+        value: object = self.value.interpret()
+        env.instance.assign(self.name, value)
+        return value
+
+
+def parenthesize(name: str, exprs: list[Expr]) -> str:
+    output = "(" + name
+
+    for expr in exprs:
+        output += " "
+        output += str(expr)
+
+    output += ")"
+    return output
+
+
+def stringify(lox_object: object) -> str:
+    if lox_object is None:
+        return "nil"
+
+    if isinstance(lox_object, bool):
+        if lox_object is True:
+            return "true"
+        else:
+            return "false"
+
+    if isinstance(lox_object, float):
+        text = str(lox_object)
+        if text.endswith(".0"):
+            text = text[0 : len(text) - 2]
+
+        return text
+
+    return str(lox_object)
+
+
+def check_operand(operator: Token, operand: object) -> float:
+    if isinstance(operand, float):
+        return operand
+
+    raise error.runtime_error(operator, "Operand must be a number.")
+
+
+def check_operands(operator: Token, left: object, right: object) -> tuple[float, float]:
+    if isinstance(left, float) and isinstance(right, float):
+        return left, right
+
+    raise error.runtime_error(operator, "Operands must be a number.")
+
+
+def is_truthy(test_obj: object) -> bool:
+    if object == None:
+        return False
+    if isinstance(test_obj, bool) is True:
+        return bool(test_obj)
+
+    return True
+
+
+def is_equal(obj_a: object, obj_b: object) -> bool:
+    if (obj_a is None) and (obj_b is None):
+        return True
+    if obj_a is None:
+        return False
+
+    return obj_a == obj_b

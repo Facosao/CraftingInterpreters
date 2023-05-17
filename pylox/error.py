@@ -1,6 +1,15 @@
 from token_class import Token
 import token_type_instances as TT
 
+
+class AbstractClassInstance(Exception):
+    ...
+
+
+class UndefinedMethod(Exception):
+    ...
+
+
 had_error = False
 had_runtime_error = False
 
@@ -22,7 +31,8 @@ def token_error(lox_token: Token, message: str) -> None:
         report(lox_token.line, " at '" + lox_token.lexeme + "'", message)
 
 
-def runtime_error(lox_token: Token, message: str) -> None:
+def runtime_error(lox_token: Token, message: str) -> RuntimeError:
     print(message + "\n[line " + str(lox_token.line) + "]")
     global had_runtime_error
     had_runtime_error = True
+    raise RuntimeError

@@ -1,5 +1,6 @@
 import sys
 import expr
+import stmt
 import error
 from scanner import Scanner
 from parser_class import Parser
@@ -13,7 +14,7 @@ def run_file(script: str) -> None:
     try:
         run(source_code)
     except RuntimeError:
-        print("Fatal error, interpreter halted.")
+        pass
 
     if error.had_error is True:
         sys.exit(65)
@@ -38,11 +39,17 @@ def run(code: str) -> None:
     scanner = Scanner(code)
     tokens: list[Token] = scanner.scan_tokens()
     parser = Parser(tokens)
-    expression = parser.parse()
+    statements = parser.parse()
+
+    for statement in statements:
+        statement.interpret()
+
+    """
     print(expression)
     if isinstance(expression, expr.Expr):
         value = expression.interpret()
         print(expr.stringify(value))
+    """
 
 
 if __name__ == "__main__":

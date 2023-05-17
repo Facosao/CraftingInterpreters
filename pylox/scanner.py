@@ -32,83 +32,83 @@ class Scanner:
         self.line: int = 1
 
     def scan_tokens(self) -> list[Token]:
-        while not self.__is_at_end():
+        while not self.is_at_end():
             self.start = self.current
-            self.__scan_token()
+            self.scan_token()
 
         self.tokens.append(Token(TT.EOF, "", None, self.line))
         return self.tokens
 
-    def __is_at_end(self) -> bool:
+    def is_at_end(self) -> bool:
         return self.current >= len(self.source)
 
-    def __advance(self) -> str:
+    def advance(self) -> str:
         character = self.source[self.current]
         self.current += 1
         return character
 
-    def __add_token(self, type: TokenType, literal: object = None) -> None:  # PyLoxNULL
+    def add_token(self, type: TokenType, literal: object = None) -> None:  # PyLoxNULL
         text: str = self.source[self.start : self.current]  # Check for correctness
         self.tokens.append(Token(type, text, literal, self.line))
 
-    def __scan_token(self) -> None:
-        character = self.__advance()
+    def scan_token(self) -> None:
+        character = self.advance()
 
         match character:
             case "(":
-                self.__add_token(TT.LEFT_PAREN)
+                self.add_token(TT.LEFT_PAREN)
             case ")":
-                self.__add_token(TT.RIGHT_PAREN)
+                self.add_token(TT.RIGHT_PAREN)
             case "{":
-                self.__add_token(TT.LEFT_BRACE)
+                self.add_token(TT.LEFT_BRACE)
             case "}":
-                self.__add_token(TT.RIGHT_BRACE)
+                self.add_token(TT.RIGHT_BRACE)
             case ",":
-                self.__add_token(TT.COMMA)
+                self.add_token(TT.COMMA)
             case ".":
-                self.__add_token(TT.DOT)
+                self.add_token(TT.DOT)
             case "-":
-                self.__add_token(TT.MINUS)
+                self.add_token(TT.MINUS)
             case "+":
-                self.__add_token(TT.PLUS)
+                self.add_token(TT.PLUS)
             case ";":
-                self.__add_token(TT.SEMICOLON)
+                self.add_token(TT.SEMICOLON)
             case "*":
-                self.__add_token(TT.STAR)
+                self.add_token(TT.STAR)
             case "!":
-                token = TT.BANG_EQUAL if self.__match("=") else TT.BANG
-                self.__add_token(token)
+                token = TT.BANG_EQUAL if self.match("=") else TT.BANG
+                self.add_token(token)
             case "=":
-                token = TT.EQUAL_EQUAL if self.__match("=") else TT.EQUAL
-                self.__add_token(token)
+                token = TT.EQUAL_EQUAL if self.match("=") else TT.EQUAL
+                self.add_token(token)
             case "<":
-                token = TT.LESS_EQUAL if self.__match("=") else TT.LESS
-                self.__add_token(token)
+                token = TT.LESS_EQUAL if self.match("=") else TT.LESS
+                self.add_token(token)
             case ">":
-                token = TT.GREATER_EQUAL if self.__match("=") else TT.GREATER
-                self.__add_token(token)
+                token = TT.GREATER_EQUAL if self.match("=") else TT.GREATER
+                self.add_token(token)
             case "/":
-                if self.__match("/"):
-                    while (self.__peek() != "\n") and (not self.__is_at_end()):
-                        self.__advance()
+                if self.match("/"):
+                    while (self.peek() != "\n") and (not self.is_at_end()):
+                        self.advance()
                 else:
-                    self.__add_token(TT.SLASH)
+                    self.add_token(TT.SLASH)
             case " " | "\r" | "\t":
                 pass
             case "\n":
                 self.line += 1
             case '"':
-                self.__string()
+                self.string()
             case _:
-                if self.__is_digit(character):
-                    self.__number()
-                elif self.__is_alpha(character):
-                    self.__identifier()
+                if self.is_digit(character):
+                    self.number()
+                elif self.is_alpha(character):
+                    self.identifier()
                 else:
                     error.error(self.line, "Unexpected character.")
 
-    def __match(self, expected: str) -> bool:
-        if self.__is_at_end():
+    def match(self, expected: str) -> bool:
+        if self.is_at_end():
             return False
 
         if self.source[self.current] != expected:
@@ -117,63 +117,63 @@ class Scanner:
         self.current += 1
         return True
 
-    def __peek(self) -> str:
-        if self.__is_at_end():
+    def peek(self) -> str:
+        if self.is_at_end():
             return "\0"
 
         return self.source[self.current]
 
-    def __string(self) -> None:
-        while (self.__peek() != '"') and (not self.__is_at_end()):
-            if self.__peek() == "\n":
+    def string(self) -> None:
+        while (self.peek() != '"') and (not self.is_at_end()):
+            if self.peek() == "\n":
                 self.line += 1
-            self.__advance()
+            self.advance()
 
-        if self.__is_at_end():
+        if self.is_at_end():
             error.error(self.line, "Unterminated string.")
             return
 
-        self.__advance()
+        self.advance()
 
         substr: str = self.source[self.start + 1 : self.current - 1]
-        self.__add_token(TT.STRING, substr)
+        self.add_token(TT.STRING, substr)
 
-    def __is_digit(self, c: str) -> bool:
+    def is_digit(self, c: str) -> bool:
         return "0" <= c <= "9"
 
-    def __number(self) -> None:
-        while self.__is_digit(self.__peek()):
-            self.__advance()
+    def number(self) -> None:
+        while self.is_digit(self.peek()):
+            self.advance()
 
-        if (self.__peek() == ".") and (self.__is_digit(self.__peek_next())):
+        if (self.peek() == ".") and (self.is_digit(self.peek_next())):
             # Consume the "."
-            self.__advance()
+            self.advance()
 
-            while self.__is_digit(self.__peek()):
-                self.__advance()
+            while self.is_digit(self.peek()):
+                self.advance()
 
         new_number = float(self.source[self.start : self.current])
-        self.__add_token(TT.NUMBER, new_number)
+        self.add_token(TT.NUMBER, new_number)
 
-    def __peek_next(self) -> str:
+    def peek_next(self) -> str:
         if self.current + 1 >= len(self.source):
             return "\0"
 
         return self.source[self.current + 1]
 
-    def __is_alpha(self, c: str) -> bool:
+    def is_alpha(self, c: str) -> bool:
         return (c >= "a" and c <= "z") or (c >= "A" and c <= "Z") or (c == "_")
 
-    def __is_alphanumeric(self, c: str) -> bool:
-        return self.__is_alpha(c) or self.__is_digit(c)
+    def is_alphanumeric(self, c: str) -> bool:
+        return self.is_alpha(c) or self.is_digit(c)
 
-    def __identifier(self) -> None:
-        while self.__is_alphanumeric(self.__peek()):
-            self.__advance()
+    def identifier(self) -> None:
+        while self.is_alphanumeric(self.peek()):
+            self.advance()
 
         text: str = self.source[self.start : self.current]
         word: None | TokenType = self.keywords.get(text)
         if word == None:
-            self.__add_token(TT.IDENTIFIER)
+            self.add_token(TT.IDENTIFIER)
         else:
-            self.__add_token(word)
+            self.add_token(word)
