@@ -1,15 +1,6 @@
 from token_class import Token
 import token_type_instances as TT
 
-
-class AbstractClassInstance(Exception):
-    ...
-
-
-class UndefinedMethod(Exception):
-    ...
-
-
 had_error = False
 had_runtime_error = False
 

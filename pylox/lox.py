@@ -1,6 +1,6 @@
 import sys
 import expr
-import stmt
+from stmt import Stmt
 import error
 from scanner import Scanner
 from parser_class import Parser
@@ -39,17 +39,10 @@ def run(code: str) -> None:
     scanner = Scanner(code)
     tokens: list[Token] = scanner.scan_tokens()
     parser = Parser(tokens)
-    statements = parser.parse()
+    statements: list[Stmt] = parser.parse()
 
     for statement in statements:
         statement.interpret()
-
-    """
-    print(expression)
-    if isinstance(expression, expr.Expr):
-        value = expression.interpret()
-        print(expr.stringify(value))
-    """
 
 
 if __name__ == "__main__":

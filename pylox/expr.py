@@ -6,10 +6,10 @@ import env
 
 class Expr:
     def __init__(self) -> None:
-        raise error.AbstractClassInstance
+        raise NotImplementedError
 
     def interpret(self) -> object:
-        raise error.UndefinedMethod
+        raise NotImplementedError
 
 
 class Binary(Expr):
@@ -135,6 +135,28 @@ class Assign(Expr):
         return value
 
 
+class Logical(Expr):
+    def __init__(self, left: Expr, operator: Token, right: Expr) -> None:
+        self.left: Expr = left
+        self.operator: Token = operator
+        self.right: Expr = right
+
+    def __str__(self) -> str:
+        return parenthesize(self.operator.lexeme, [self.left, self.right])
+
+    def interpret(self) -> object:
+        left: object = self.left.interpret()
+
+        if self.operator.type == TT.OR:
+            if is_truthy(left):
+                return left  #  OR -> Left is true --> Short circuit -> true
+        else:
+            if not is_truthy(left):
+                return left  # AND -> Left is false -> Short circuit -> false
+
+        return self.right.interpret()
+
+
 def parenthesize(name: str, exprs: list[Expr]) -> str:
     output = "(" + name
 
@@ -181,7 +203,7 @@ def check_operands(operator: Token, left: object, right: object) -> tuple[float,
 
 
 def is_truthy(test_obj: object) -> bool:
-    if object == None:
+    if test_obj is None:
         return False
     if isinstance(test_obj, bool) is True:
         return bool(test_obj)

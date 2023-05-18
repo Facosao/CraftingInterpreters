@@ -24,7 +24,7 @@ class Environment:
 
     def assign(self, name: Token, value: object) -> None:
         test_value = self.values.get(name.lexeme)
-        if test_value is not None:
+        if name.lexeme in self.values:
             self.values.update({name.lexeme: value})
             return
 

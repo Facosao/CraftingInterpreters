@@ -7,10 +7,10 @@ from token_class import Token
 
 class Stmt:
     def __init__(self) -> None:
-        raise error.AbstractClassInstance
+        raise NotImplementedError
 
     def interpret(self) -> None:
-        raise error.UndefinedMethod
+        raise NotImplementedError
 
 
 class ExpressionStmt(Stmt):
@@ -49,6 +49,31 @@ class Block(Stmt):
 
     def interpret(self) -> None:
         execute_block(self.statements, env.Environment(env.instance))
+
+
+class If(Stmt):
+    def __init__(
+        self, condition: Expr, then_branch: Stmt, else_branch: Stmt | None
+    ) -> None:
+        self.condition: Expr = condition
+        self.then_branch: Stmt = then_branch
+        self.else_branch: Stmt | None = else_branch
+
+    def interpret(self) -> None:
+        if expr.is_truthy(self.condition.interpret()):
+            self.then_branch.interpret()
+        elif self.else_branch is not None:
+            self.else_branch.interpret()
+
+
+class While(Stmt):
+    def __init__(self, condition: Expr, body: Stmt) -> None:
+        self.condition: Expr = condition
+        self.body: Stmt = body
+
+    def interpret(self) -> None:
+        while expr.is_truthy(self.condition.interpret()):
+            self.body.interpret()
 
 
 def execute_block(statements: list[Stmt], environment: env.Environment):

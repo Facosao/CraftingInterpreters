@@ -1,3 +1,4 @@
+from __future__ import annotations
 from token_type import TokenType
 from token_class import Token
 from expr import Expr
@@ -87,6 +88,41 @@ class Parser:
     def expression(self):
         return self.assignment()
 
+    def assignment(self) -> Expr:
+        expression = self.logical_or()
+
+        if self.match([TT.EQUAL]):
+            equals: Token = self.previous()
+            value: Expr = self.assignment()
+
+            if isinstance(expression, expr.Variable):
+                name: Token = expression.name
+                return expr.Assign(name, value)
+
+            error.token_error(equals, "Invalid assignment target.")
+
+        return expression
+
+    def logical_or(self) -> Expr:
+        expression: Expr = self.logical_and()
+
+        while self.match([TT.OR]):
+            operator: Token = self.previous()
+            right: Expr = self.logical_and()
+            expression = expr.Logical(expression, operator, right)
+
+        return expression
+
+    def logical_and(self) -> Expr:
+        expression: Expr = self.equality()
+
+        while self.match([TT.AND]):
+            operator: Token = self.previous()
+            right: Expr = self.equality()
+            expression = expr.Logical(expression, operator, right)
+
+        return expression
+
     def equality(self):
         new_expr = self.comparison()
 
@@ -167,6 +203,20 @@ class Parser:
 
     # ------------------------- STATEMENTS -------------------------
 
+    def statement(self) -> Stmt:
+        if self.match([TT.IF]):
+            return self.if_statement()
+        if self.match([TT.PRINT]):
+            return self.print_statement()
+        if self.match([TT.WHILE]):
+            return self.while_statement()
+        if self.match([TT.FOR]):
+            return self.for_statement()
+        if self.match([TT.LEFT_BRACE]):
+            return stmt.Block(self.block())
+
+        return self.expression_statement()
+
     def declaration(self) -> Stmt | None:
         try:
             if self.match([TT.VAR]):
@@ -176,29 +226,6 @@ class Parser:
         except ParseError:
             self.synchonize()
             return None
-
-    def statement(self) -> Stmt:
-        if self.match([TT.PRINT]):
-            return self.print_statement()
-        if self.match([TT.LEFT_BRACE]):
-            return stmt.Block(self.block())
-
-        return self.expression_statement()
-
-    def assignment(self) -> Expr:
-        expression = self.equality()
-
-        if self.match([TT.EQUAL]):
-            equals: Token = self.previous()
-            value: Expr = self.assignment()
-
-            if isinstance(expression, expr.Variable):
-                name: Token = expression.name
-                return expr.Assign(name, value)
-
-            error.token_error(equals, "Invalid assignment target.")
-
-        return expression
 
     def print_statement(self) -> Stmt:
         value: Expr = self.expression()
@@ -230,3 +257,57 @@ class Parser:
 
         self.consume(TT.RIGHT_BRACE, "Expect } after block.")
         return statements
+
+    def if_statement(self) -> Stmt:
+        self.consume(TT.LEFT_PAREN, "Expect '(' after 'if'.")
+        condition: Expr = self.expression()
+        self.consume(TT.RIGHT_PAREN, "Expect ')' after if condition.")
+
+        then_branch: Stmt = self.statement()
+        else_branch: Stmt | None = None
+        if self.match([TT.ELSE]):
+            else_branch = self.statement()
+
+        return stmt.If(condition, then_branch, else_branch)
+
+    def while_statement(self) -> Stmt:
+        self.consume(TT.LEFT_PAREN, "Expect '(' after 'while'.")
+        condition: Expr = self.expression()
+        self.consume(TT.RIGHT_PAREN, "Expect ')' after condition.")
+        body: Stmt = self.statement()
+
+        return stmt.While(condition, body)
+
+    def for_statement(self) -> Stmt:
+        self.consume(TT.LEFT_PAREN, "Expect '(' after 'for'.")
+
+        if self.match([TT.SEMICOLON]):
+            initializer: Stmt | None = None
+        elif self.match([TT.VAR]):
+            initializer: Stmt | None = self.var_declaration()
+        else:
+            initializer: Stmt | None = self.expression_statement()
+
+        condition: Expr | None = None
+        if not self.check(TT.SEMICOLON):
+            condition = self.expression()
+        self.consume(TT.SEMICOLON, "Expect ';' after loop condition.")
+
+        increment: Expr | None = None
+        if not self.check(TT.RIGHT_PAREN):
+            increment = self.expression()
+        self.consume(TT.RIGHT_PAREN, "Expect ')' after for clauses.")
+
+        body: Stmt = self.statement()
+
+        if increment is not None:
+            body = stmt.Block([body, stmt.ExpressionStmt(increment)])
+
+        if condition is None:
+            condition = expr.Literal(True)
+        body = stmt.While(condition, body)
+
+        if initializer is not None:
+            body = stmt.Block([initializer, body])
+
+        return body
