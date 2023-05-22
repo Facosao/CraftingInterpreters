@@ -1,5 +1,6 @@
 from __future__ import annotations
 import error
+import lox_callable
 from token_class import Token
 
 
@@ -23,7 +24,7 @@ class Environment:
         raise error.runtime_error(name, error_str)
 
     def assign(self, name: Token, value: object) -> None:
-        test_value = self.values.get(name.lexeme)
+        # test_value = self.values.get(name.lexeme)
         if name.lexeme in self.values:
             self.values.update({name.lexeme: value})
             return
@@ -37,3 +38,4 @@ class Environment:
 
 
 instance = Environment()
+instance.define("clock", lox_callable.Clock())

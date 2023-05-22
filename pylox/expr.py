@@ -1,4 +1,5 @@
 from token_class import Token
+from lox_callable import LoxCallable
 import token_type_instances as TT
 import error
 import env
@@ -155,6 +156,35 @@ class Logical(Expr):
                 return left  # AND -> Left is false -> Short circuit -> false
 
         return self.right.interpret()
+
+
+class Call(Expr):
+    def __init__(self, callee: Expr, paren: Token, args: list[Expr]) -> None:
+        self.callee: Expr = callee
+        self.paren: Token = paren
+        self.arguments: list[Expr] = args
+
+    def interpret(self) -> object:
+        callee: object = self.callee.interpret()
+
+        args: list[object] = []
+        for argument in self.arguments:
+            args.append(argument.interpret())
+
+        if not isinstance(callee, LoxCallable):
+            raise error.runtime_error(
+                self.paren, "Can only call functions and classes."
+            )
+
+        # Implicit cast from Python? (object -> LoxCallable)
+        function: LoxCallable = callee
+
+        if len(args) != function.arity():
+            error_str = "Expected " + str(function.arity()) + " arguments but got "
+            error_str = error_str + str(len(args)) + "."
+            raise error.runtime_error(self.paren, error_str)
+
+        return function.call(args)
 
 
 def parenthesize(name: str, exprs: list[Expr]) -> str:

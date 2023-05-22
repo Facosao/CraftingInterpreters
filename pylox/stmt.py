@@ -76,6 +76,16 @@ class While(Stmt):
             self.body.interpret()
 
 
+class Function(Stmt):
+    def __init__(self, name: Token, params: list[Token], body: list[Stmt]) -> None:
+        self.name: Token = name
+        self.params: list[Token] = params
+        self.body: list[Stmt] = body
+
+    def interpret(self) -> None:
+        raise NotImplementedError
+
+
 def execute_block(statements: list[Stmt], environment: env.Environment):
     previous: env.Environment = env.instance
     try:

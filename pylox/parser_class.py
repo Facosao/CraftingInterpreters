@@ -176,7 +176,7 @@ class Parser:
             right: Expr = self.unary()
             return expr.Unary(operator, right)
 
-        return self.primary()
+        return self.call()
 
     def primary(self) -> Expr:
         if self.match([TT.FALSE]):
@@ -201,6 +201,33 @@ class Parser:
 
         raise self.error(self.peek(), "Expect expression.")
 
+    def call(self) -> Expr:
+        expression: Expr = self.primary()
+
+        while True:
+            if self.match([TT.LEFT_PAREN]):
+                expression = self.finish_call(expression)
+            else:
+                break
+
+        return expression
+
+    def finish_call(self, callee: Expr) -> Expr:
+        args: list[Expr] = []
+
+        if not self.check(TT.RIGHT_PAREN):
+            args.append(self.expression())
+            while self.match([TT.COMMA]):
+                if len(args) >= 255:
+                    # This raises an exception -> divergence from book?
+                    self.error(self.peek(), "Can't have more than 255 arguments.")
+
+                args.append(self.expression())
+
+        paren: Token = self.consume(TT.RIGHT_PAREN, "Expect ')' after arguments.")
+
+        return expr.Call(callee, paren, args)
+
     # ------------------------- STATEMENTS -------------------------
 
     def statement(self) -> Stmt:
@@ -219,6 +246,8 @@ class Parser:
 
     def declaration(self) -> Stmt | None:
         try:
+            if self.match([TT.FUN]):
+                return self.function("function")
             if self.match([TT.VAR]):
                 return self.var_declaration()
 
@@ -227,17 +256,17 @@ class Parser:
             self.synchonize()
             return None
 
-    def print_statement(self) -> Stmt:
+    def print_statement(self) -> stmt.Print:
         value: Expr = self.expression()
         self.consume(TT.SEMICOLON, "Expect ';' after value.")
         return stmt.Print(value)
 
-    def expression_statement(self) -> Stmt:
+    def expression_statement(self) -> stmt.ExpressionStmt:
         expr: Expr = self.expression()
         self.consume(TT.SEMICOLON, "Expect ';' after expression.")
         return stmt.ExpressionStmt(expr)
 
-    def var_declaration(self):
+    def var_declaration(self) -> stmt.Var:
         name: Token = self.consume(TT.IDENTIFIER, "Expect variable name.")
 
         initializer: Expr | None = None
@@ -258,7 +287,7 @@ class Parser:
         self.consume(TT.RIGHT_BRACE, "Expect } after block.")
         return statements
 
-    def if_statement(self) -> Stmt:
+    def if_statement(self) -> stmt.If:
         self.consume(TT.LEFT_PAREN, "Expect '(' after 'if'.")
         condition: Expr = self.expression()
         self.consume(TT.RIGHT_PAREN, "Expect ')' after if condition.")
@@ -270,7 +299,7 @@ class Parser:
 
         return stmt.If(condition, then_branch, else_branch)
 
-    def while_statement(self) -> Stmt:
+    def while_statement(self) -> stmt.While:
         self.consume(TT.LEFT_PAREN, "Expect '(' after 'while'.")
         condition: Expr = self.expression()
         self.consume(TT.RIGHT_PAREN, "Expect ')' after condition.")
@@ -311,3 +340,22 @@ class Parser:
             body = stmt.Block([initializer, body])
 
         return body
+
+    def function(self, kind: str) -> stmt.Function:
+        name: Token = self.consume(TT.IDENTIFIER, "Expect " + kind + " name.")
+        params: list[Token] = []
+
+        if not self.check(TT.RIGHT_PAREN):
+            params.append(self.consume(TT.IDENTIFIER, "Expect parameter name."))
+            while self.match([TT.COMMA]):
+                if len(params) >= 255:
+                    # Same concern as self.finish_call()
+                    self.error(self.peek(), "Can't have more than 255 arguments.")
+
+                params.append(self.consume(TT.IDENTIFIER, "Expect parameter name."))
+
+        self.consume(TT.RIGHT_PAREN, "Expect ')' after parameters.")
+        self.consume(TT.LEFT_BRACE, "Expect '{' before " + kind + " body.")
+        body: list[Stmt] = self.block()
+
+        return stmt.Function(name, params, body)
