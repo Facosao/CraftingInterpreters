@@ -1,6 +1,6 @@
-import error
 import expr
 import env
+from lox_callable import LoxCallable
 from expr import Expr
 from token_class import Token
 
@@ -83,7 +83,26 @@ class Function(Stmt):
         self.body: list[Stmt] = body
 
     def interpret(self) -> None:
-        raise NotImplementedError
+        function: LoxFunction = LoxFunction(self)
+        env.instance.define(self.name.lexeme, function)
+
+
+class LoxFunction(LoxCallable):
+    def __init__(self, declaration: Function) -> None:
+        self.declaration: Function = declaration
+
+    def call(self, arguments: list[object]):
+        environment: env.Environment = env.Environment(env.globals)
+        for i in range(len(self.declaration.params)):
+            environment.define(self.declaration.params[i].lexeme, arguments[i])
+
+        execute_block(self.declaration.body, environment)
+
+    def arity(self):
+        return len(self.declaration.params)
+
+    def __str__(self) -> str:
+        return "<fn " + self.declaration.name.lexeme + ">"
 
 
 def execute_block(statements: list[Stmt], environment: env.Environment):

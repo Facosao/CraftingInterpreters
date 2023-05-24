@@ -1,5 +1,4 @@
 import sys
-import expr
 from stmt import Stmt
 import error
 from scanner import Scanner
@@ -50,6 +49,8 @@ if __name__ == "__main__":
         print("Usage: python lox.py [script]")
         sys.exit(64)
     else:
+        # run_file("./examples/fun_call.lox")
+        # quit()
         if len(sys.argv) == 2:
             run_file(sys.argv[1])
         else:

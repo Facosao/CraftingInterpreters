@@ -49,7 +49,7 @@ class Parser:
         self.advance()
 
         while not self.is_at_end():
-            if self.previous().type == TT.SEMICOLON:
+            if self.previous().type is TT.SEMICOLON:
                 return
 
             match self.peek().type.value:
@@ -66,7 +66,7 @@ class Parser:
         if self.is_at_end():
             return False
 
-        return self.peek().type == arg_type
+        return self.peek().type is arg_type
 
     def advance(self) -> Token:
         if not self.is_at_end():
@@ -75,7 +75,7 @@ class Parser:
         return self.previous()
 
     def is_at_end(self):
-        return self.peek().type == TT.EOF
+        return self.peek().type is TT.EOF
 
     def peek(self) -> Token:
         return self.tokens[self.current]
@@ -343,6 +343,7 @@ class Parser:
 
     def function(self, kind: str) -> stmt.Function:
         name: Token = self.consume(TT.IDENTIFIER, "Expect " + kind + " name.")
+        self.consume(TT.LEFT_PAREN, "Expect '(' after " + kind + " name.")
         params: list[Token] = []
 
         if not self.check(TT.RIGHT_PAREN):

@@ -1,6 +1,5 @@
 from __future__ import annotations
 import error
-import lox_callable
 from token_class import Token
 
 
@@ -37,5 +36,5 @@ class Environment:
         raise error.runtime_error(name, error_str)
 
 
-instance = Environment()
-instance.define("clock", lox_callable.Clock())
+globals = Environment()
+instance = globals

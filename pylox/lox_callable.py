@@ -1,4 +1,5 @@
 import time
+import env
 
 
 class LoxCallable:
@@ -25,3 +26,6 @@ class Clock(LoxCallable):
 
     def __str__(self) -> str:
         return "<native fn>"
+
+
+env.globals.define("clock", Clock())
